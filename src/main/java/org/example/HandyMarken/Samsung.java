@@ -1,46 +1,91 @@
 package org.example.HandyMarken;
 
+import org.apache.commons.text.similarity.LevenshteinDistance;
+import org.example.User.DatabaseConnection;
+
+import java.sql.*;
 import java.util.ArrayList;
 import java.util.Scanner;
-import org.apache.commons.text.similarity.LevenshteinDistance;
 
 public class Samsung extends Handys implements HandyInterface {
-    private static ArrayList<Samsung> samsungs = new ArrayList<>();
 
-    public Samsung(String name, String model, String brand, double price, int stock) {
-        super(name, model, brand, price, stock);
+    private static final Scanner scanner = new Scanner(System.in);
+
+    public Samsung(String name, String model, String brand, String color, String storage, double price, int stock) {
+        super(name, model, brand, color, storage, price, stock);
     }
 
-    static {
-        samsungs.add(new Samsung("Samsung", "S15", "Samsung", 699.99, 10));
-        samsungs.add(new Samsung("Samsung", "S16", "Samsung", 749.99, 12));
-        samsungs.add(new Samsung("Samsung", "S17", "Samsung", 799.99, 14));
-        samsungs.add(new Samsung("Samsung", "S18", "Samsung", 849.99, 16));
-        samsungs.add(new Samsung("Samsung", "S19", "Samsung", 899.99, 18));
-        samsungs.add(new Samsung("Samsung", "S20", "Samsung", 949.99, 20));
-        samsungs.add(new Samsung("Samsung", "S21", "Samsung", 999.99, 22));
-        samsungs.add(new Samsung("Samsung", "S22", "Samsung", 1049.99, 24));
-        samsungs.add(new Samsung("Samsung", "S23", "Samsung", 1099.99, 26));
+    public static ArrayList<Samsung> loadAllSamsungFromDB() {
+        ArrayList<Samsung> samsungList = new ArrayList<>();
+
+        String sql = "SELECT name, model, brand, color, storage, price, stock FROM samsung";
+
+        try (Connection connection = DatabaseConnection.getConnection();
+             PreparedStatement stmt = connection.prepareStatement(sql);
+             ResultSet rs = stmt.executeQuery()) {
+
+            while (rs.next()) {
+                samsungList.add(new Samsung(
+                        rs.getString("name"),
+                        rs.getString("model"),
+                        rs.getString("brand"),
+                        rs.getString("color"),
+                        rs.getString("storage"),
+                        rs.getDouble("price"),
+                        rs.getInt("stock")
+                ));
+            }
+
+        } catch (SQLException e) {
+            e.printStackTrace();
+            throw new RuntimeException("Fehler beim Laden der Samsung-Geräte aus der DB.");
+        }
+
+        return samsungList;
     }
 
-    @Override
-    public void showAllDevices() {
+    public static void showAllSamsung() {
+        ArrayList<Samsung> samsungList = loadAllSamsungFromDB();
+
         System.out.println("\n📌 Verfügbare Samsung-Geräte:");
-        if (samsungs.isEmpty()) {
+        if (samsungList.isEmpty()) {
             System.out.println("❌ Keine Samsung-Geräte verfügbar.");
             return;
         }
-        for (Samsung samsung : samsungs) {
+
+        for (Samsung samsung : samsungList) {
             String status = (samsung.getStock() > 0) ? "✅ Verfügbar: " + samsung.getStock() : "❌ Nicht verfügbar";
-            System.out.println("📌 " + samsung.getName() + " " + samsung.getModel() + " | 💰 " + samsung.getPrice() + "€ | " + status);
+            System.out.println("📌 " + samsung.getName() + " " + samsung.getModel() + " (" + samsung.getColor() + ", " + samsung.getStorage() + ") | 💰 " + samsung.getPrice() + "€ | " + status);
         }
     }
 
-    @Override
-    public Samsung findDeviceByModel(String userInput) {
-        if (userInput == null || userInput.trim().isEmpty()) {
-            return null;
+    public void decreaseStockInDB() {
+        String sql = "UPDATE samsung SET stock = stock - 1 WHERE name = ? AND model = ? AND color = ? AND storage = ? AND stock > 0";
+
+        try (Connection connection = DatabaseConnection.getConnection();
+             PreparedStatement stmt = connection.prepareStatement(sql)) {
+
+            stmt.setString(1, getName());
+            stmt.setString(2, getModel());
+            stmt.setString(3, getColor());
+            stmt.setString(4, getStorage());
+
+            int updatedRows = stmt.executeUpdate();
+
+            if (updatedRows > 0) {
+                System.out.println("✅ Kauf erfolgreich! Bestand wurde aktualisiert.");
+            } else {
+                System.out.println("❌ Nicht verfügbar oder Fehler beim Aktualisieren.");
+            }
+
+        } catch (SQLException e) {
+            e.printStackTrace();
+            throw new RuntimeException("Fehler beim Aktualisieren des Bestandes.");
         }
+    }
+
+    public static Samsung findSamsungByModel(String userInput) {
+        ArrayList<Samsung> samsungList = loadAllSamsungFromDB();
 
         userInput = userInput.trim().replaceAll("[^a-zA-Z0-9]", "").toLowerCase();
         LevenshteinDistance levenshtein = new LevenshteinDistance();
@@ -48,26 +93,19 @@ public class Samsung extends Handys implements HandyInterface {
         int minDistance = Integer.MAX_VALUE;
         ArrayList<Samsung> besteVorschläge = new ArrayList<>();
 
-        for (Samsung samsung : samsungs) {
-            String model = samsung.getModel().replaceAll("\\s+", "").toLowerCase();
+        for (Samsung samsung : samsungList) {
             String fullName = (samsung.getName() + samsung.getModel()).replaceAll("\\s+", "").toLowerCase();
-            String shortName = samsung.getName().substring(0, 2).toLowerCase() + samsung.getModel();
 
-            if (model.equals(userInput) || fullName.equals(userInput) || shortName.equals(userInput)) {
+            if (fullName.equals(userInput)) {
                 return samsung;
             }
 
-            int distanceModel = levenshtein.apply(model, userInput);
-            int distanceFullName = levenshtein.apply(fullName, userInput);
-            int distanceShortName = levenshtein.apply(shortName, userInput);
-
-            int minCurrent = Math.min(distanceModel, Math.min(distanceFullName, distanceShortName));
-
-            if (minCurrent < minDistance) {
-                minDistance = minCurrent;
+            int distance = levenshtein.apply(fullName, userInput);
+            if (distance < minDistance) {
+                minDistance = distance;
                 besteVorschläge.clear();
                 besteVorschläge.add(samsung);
-            } else if (minCurrent == minDistance) {
+            } else if (distance == minDistance) {
                 besteVorschläge.add(samsung);
             }
         }
@@ -75,11 +113,10 @@ public class Samsung extends Handys implements HandyInterface {
         if (!besteVorschläge.isEmpty() && minDistance <= 3) {
             System.out.println("❓ Meinten Sie vielleicht eines dieser Modelle?");
             for (Samsung vorschlag : besteVorschläge) {
-                System.out.println("   ➜ " + vorschlag.getName() + " " + vorschlag.getModel());
+                System.out.println("   ➜ " + vorschlag.getName() + " " + vorschlag.getModel() + " (" + vorschlag.getColor() + ", " + vorschlag.getStorage() + ")");
             }
 
             System.out.print("👉 Möchten Sie dieses Modell wählen? (Ja/Nein): ");
-            Scanner scanner = new Scanner(System.in);
             String confirmation = scanner.nextLine().trim().toLowerCase();
 
             if (confirmation.matches("^(ja|j|yes|y|si|oui|aye|jo|yep|yup)$")) {
@@ -89,7 +126,16 @@ public class Samsung extends Handys implements HandyInterface {
                 return null;
             }
         }
-
         return null;
+    }
+
+    @Override
+    public void showAllDevices() {
+        showAllSamsung();
+    }
+
+    @Override
+    public Handys findDeviceByModel(String userInput) {
+        return findSamsungByModel(userInput);
     }
 }

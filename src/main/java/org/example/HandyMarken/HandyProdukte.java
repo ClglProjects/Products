@@ -4,18 +4,24 @@ public class HandyProdukte {
     private String name;
     private String model;
     private String brand;
+    private String color;          // Neue Eigenschaft: Farbe
+    private String storage;        // Neue Eigenschaft: Speichergröße
     private double price;
 
-    public HandyProdukte(String thename, String themodel, String thebrand, double theprice) {
-        this.name = thename;
-        this.model = themodel;
-        this.brand = thebrand;
-        this.price = theprice;
-    }
-    public void getDetails(){
-        System.out.println(name+" "+model+" "+brand+" "+price);
+    public HandyProdukte(String name, String model, String brand, String color, String storage, double price) {
+        this.name = name;
+        this.model = model;
+        this.brand = brand;
+        this.color = color;
+        this.storage = storage;
+        this.price = price;
     }
 
+    public void getDetails(){
+        System.out.println(name + " " + model + " " + brand + " " + color + " " + storage + " " + price + "€");
+    }
+
+    // Getter und Setter
     public String getName() {
         return name;
     }
@@ -40,6 +46,22 @@ public class HandyProdukte {
         this.brand = brand;
     }
 
+    public String getColor() {
+        return color;
+    }
+
+    public void setColor(String color) {
+        this.color = color;
+    }
+
+    public String getStorage() {
+        return storage;
+    }
+
+    public void setStorage(String storage) {
+        this.storage = storage;
+    }
+
     public double getPrice() {
         return price;
     }
@@ -48,5 +70,3 @@ public class HandyProdukte {
         this.price = price;
     }
 }
-
-

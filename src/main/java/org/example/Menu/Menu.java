@@ -7,13 +7,13 @@ import org.example.User.AuthSystem;
 
 public class Menu {
     private static final Scanner scanner = new Scanner(System.in);
-    private static User loggedInUser = null; // Initialisieren mit null, um zu signalisieren, dass niemand eingeloggt ist
+    private static User loggedInUser = null; // Null bedeutet: Niemand eingeloggt
     private static Warenkorb warenkorb = new Warenkorb();
 
     public static void showMainMenu() {
         while (true) {
             if (loggedInUser == null) {
-                // Wenn der Benutzer nicht eingeloggt ist, zeige Login- und Registrierungs-Option
+                // Login-/Registrierungs-Menü
                 System.out.println("\n📌 Willkommen im Handy-Shop!");
                 System.out.println("1️⃣ Einloggen");
                 System.out.println("2️⃣ Registrieren");
@@ -23,10 +23,10 @@ public class Menu {
                 String choice = scanner.nextLine();
                 switch (choice) {
                     case "1":
-                        loginUser(); // Benutzer einloggen
+                        loginUser();
                         break;
                     case "2":
-                        registerUser(); // Benutzer registrieren
+                        registerUser();
                         break;
                     case "3":
                         System.out.println("👋 Programm wird beendet.");
@@ -34,10 +34,9 @@ public class Menu {
                         return;
                     default:
                         System.out.println("❌ Ungültige Eingabe!");
-                        break;
                 }
             } else {
-                // Wenn der Benutzer eingeloggt ist, zeige die Optionen
+                // Hauptmenü nach erfolgreichem Login
                 System.out.println("\n📌 Willkommen zurück, " + loggedInUser.getUsername() + "!");
                 System.out.println("1️⃣ Apple (iPhones anzeigen)");
                 System.out.println("2️⃣ Samsung (Samsung-Handys anzeigen)");
@@ -52,36 +51,37 @@ public class Menu {
 
                 switch (choice) {
                     case "1":
-                        Iphone iphone = new Iphone("", "", "Apple", 0, 0);
+                        // Hier 7 Argumente: name, model, brand, color, storage, price, stock
+                        Iphone iphone = new Iphone("", "", "Apple", "", "", 0.0, 0);
                         iphone.showAllDevices();
                         handleDeviceSelection(scanner, iphone);
                         break;
                     case "2":
-                        Samsung samsung = new Samsung("", "", "Samsung", 0, 0);
+                        Samsung samsung = new Samsung("", "", "Samsung", "", "", 0.0, 0);
                         samsung.showAllDevices();
                         handleDeviceSelection(scanner, samsung);
                         break;
                     case "3":
-                        Huawei huawei = new Huawei("", "", "Huawei", 0, 0);
+                        Huawei huawei = new Huawei("", "", "Huawei", "", "", 0.0, 0);
                         huawei.showAllDevices();
                         handleDeviceSelection(scanner, huawei);
                         break;
                     case "4":
-                        Xiaomi xiaomi = new Xiaomi("", "", "Xiaomi", 0, 0);
+                        Xiaomi xiaomi = new Xiaomi("", "", "Xiaomi", "", "", 0.0, 0);
                         xiaomi.showAllDevices();
                         handleDeviceSelection(scanner, xiaomi);
                         break;
                     case "5":
-                        GooglePixel pixel = new GooglePixel("", "", "Google", 0, 0);
+                        GooglePixel pixel = new GooglePixel("", "", "Google", "", "", 0.0, 0);
                         pixel.showAllDevices();
                         handleDeviceSelection(scanner, pixel);
                         break;
                     case "6":
-                        // Warenkorb anzeigen für den eingeloggenen Benutzer
+
                         loggedInUser.getCart().showCart();
                         break;
                     case "7":
-                        loggedInUser = null;  // Benutzer abmelden
+                        loggedInUser = null;
                         System.out.println("👋 Du hast dich erfolgreich abgemeldet.");
                         break;
                     default:
@@ -97,12 +97,12 @@ public class Menu {
         System.out.print("👉 Passwort: ");
         String password = scanner.nextLine();
 
-        loggedInUser = AuthSystem.login(username, password);  // Benutzer authentifizieren
+        loggedInUser = AuthSystem.login(username, password);
 
         if (loggedInUser != null) {
-            System.out.println("✅ Du bist jetzt eingeloggt!");
+            System.out.println("✅ Login erfolgreich.");
         } else {
-            System.out.println("❌ Login fehlgeschlagen! Bitte versuche es erneut.");
+            System.out.println("❌ Benutzername oder Passwort falsch.");
         }
     }
 
@@ -111,16 +111,22 @@ public class Menu {
         String username = scanner.nextLine();
         System.out.print("👉 Passwort: ");
         String password = scanner.nextLine();
+        System.out.print("👉 E-Mail: ");
+        String email = scanner.nextLine();
+        System.out.print("👉 Telefonnummer (optional): ");
+        String phone = scanner.nextLine();
 
-        boolean success = AuthSystem.register(username, password);  // Benutzer registrieren
+        boolean success = AuthSystem.register(username, password, email, phone);
 
         if (success) {
             System.out.println("✅ Registrierung erfolgreich!");
-            loggedInUser = AuthSystem.login(username, password); // Sofort einloggen nach der Registrierung
+            loggedInUser = AuthSystem.login(username, password);
         } else {
-            System.out.println("❌ Registrierung fehlgeschlagen! Benutzername könnte bereits existieren.");
+            System.out.println("❌ Benutzername oder E-Mail existiert bereits!");
         }
     }
+
+
 
     private static void handleDeviceSelection(Scanner scanner, HandyInterface brand) {
         while (true) {
@@ -134,19 +140,23 @@ public class Menu {
             Handys gefundenesGerät = brand.findDeviceByModel(userInput);
 
             if (gefundenesGerät != null) {
-                System.out.println("✅ Gefunden: " + gefundenesGerät.getName() + " " + gefundenesGerät.getModel() + " - 💰 " + gefundenesGerät.getPrice() + "€");
+                System.out.println("✅ Gefunden: " + gefundenesGerät.getName()
+                        + " " + gefundenesGerät.getModel()
+                        + " (" + gefundenesGerät.getColor() + ", " + gefundenesGerät.getStorage() + ")"
+                        + " - 💰 " + gefundenesGerät.getPrice() + "€");
                 System.out.print("👉 Möchtest du dieses Modell kaufen? (Ja/Nein): ");
                 String confirmation = scanner.nextLine().trim().toLowerCase();
 
                 if (confirmation.matches("^(ja|j|yes|y|si|oui|aye|jo|yep|yup)$")) {
-                    gefundenesGerät.decreaseStock();
-                    loggedInUser.getCart().addToCart(gefundenesGerät); // Zum Warenkorb des angemeldeten Benutzers hinzufügen
-                    System.out.println("🛒 " + gefundenesGerät.getName() + " " + gefundenesGerät.getModel() + " wurde zum Warenkorb hinzugefügt!");
 
-                    // 📌 **Warenkorb direkt anzeigen nach dem Kauf**
+                    gefundenesGerät.decreaseStock();
+                    loggedInUser.getCart().addToCart(gefundenesGerät);
+                    System.out.println("🛒 " + gefundenesGerät.getName() + " " + gefundenesGerät.getModel()
+                            + " wurde zum Warenkorb hinzugefügt!");
+
+
                     loggedInUser.getCart().showCart();
 
-                    // 📌 **Nach dem Kauf fragen, was der Nutzer tun will**
                     System.out.println("\n🔄 Was möchtest du tun?");
                     System.out.println("1️⃣ Neues Modell eingeben");
                     System.out.println("2️⃣ Zurück zum Hauptmenü");
@@ -161,7 +171,7 @@ public class Menu {
                         case "2":
                             return;
                         case "3":
-                            loggedInUser.getCart().checkout(); // Zum Checkout
+                            loggedInUser.getCart().checkout();
                             return;
                         default:
                             System.out.println("❌ Ungültige Eingabe! Zurück zum Hauptmenü.");

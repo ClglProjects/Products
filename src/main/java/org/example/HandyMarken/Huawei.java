@@ -1,46 +1,102 @@
 package org.example.HandyMarken;
 
+import org.apache.commons.text.similarity.LevenshteinDistance;
+import org.example.User.DatabaseConnection;
+
+import java.sql.*;
 import java.util.ArrayList;
 import java.util.Scanner;
-import org.apache.commons.text.similarity.LevenshteinDistance;
 
 public class Huawei extends Handys implements HandyInterface {
-    private static ArrayList<Huawei> huaweis = new ArrayList<>();
 
-    public Huawei(String name, String model, String brand, double price, int stock) {
-        super(name, model, brand, price, stock);
+    private static final Scanner scanner = new Scanner(System.in);
+
+    public Huawei(String name, String model, String brand, String color, String storage, double price, int stock) {
+        super(name, model, brand, color, storage, price, stock);
     }
 
-    static {
-        huaweis.add(new Huawei("Huawei", "Y9 Prime", "Huawei", 299.99, 30));    // 2018
-        huaweis.add(new Huawei("Huawei", "P20 Pro", "Huawei", 599.99, 35));     // 2018
-        huaweis.add(new Huawei("Huawei", "P30 Pro", "Huawei", 298.00, 18));     // 2019
-        huaweis.add(new Huawei("Huawei", "Mate 40 Pro", "Huawei", 413.99, 20)); // 2020
-        huaweis.add(new Huawei("Huawei", "P40 Pro", "Huawei", 320.73, 12));     // 2020
-        huaweis.add(new Huawei("Huawei", "Nova 9", "Huawei", 262.00, 25));      // 2021
-        huaweis.add(new Huawei("Huawei", "P50 Pro", "Huawei", 1138.55, 10));    // 2021
-        huaweis.add(new Huawei("Huawei", "Mate 50 Pro", "Huawei", 649.99, 15)); // 2022
-        huaweis.add(new Huawei("Huawei", "Mate Xs 2", "Huawei", 1999.99, 5));   // 2022
+    public static ArrayList<Huawei> loadAllHuaweiFromDB() {
+        ArrayList<Huawei> huaweiList = new ArrayList<>();
+
+        String sql = "SELECT name, model, brand, color, storage, price, stock FROM huawei";
+
+        try (Connection connection = DatabaseConnection.getConnection();
+             PreparedStatement stmt = connection.prepareStatement(sql);
+             ResultSet rs = stmt.executeQuery()) {
+
+            while (rs.next()) {
+                huaweiList.add(new Huawei(
+                        rs.getString("name"),
+                        rs.getString("model"),
+                        rs.getString("brand"),
+                        rs.getString("color"),
+                        rs.getString("storage"),
+                        rs.getDouble("price"),
+                        rs.getInt("stock")
+                ));
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+            throw new RuntimeException("Fehler beim Laden der Huawei-Geräte aus der DB.");
+        }
+
+        return huaweiList;
     }
 
-    @Override
-    public void showAllDevices() {
-        System.out.println("\n📌 Verfügbare Huawei-Geräte (von ältesten zu neuesten Modellen):");
-        if (huaweis.isEmpty()) {
+    public static void showAllHuawei() {
+        ArrayList<Huawei> huaweiList = loadAllHuaweiFromDB();
+
+        System.out.println("\n📌 Verfügbare Huawei-Geräte:");
+        if (huaweiList.isEmpty()) {
             System.out.println("❌ Keine Huawei-Geräte verfügbar.");
             return;
         }
-        for (Huawei huawei : huaweis) {
+
+        for (Huawei huawei : huaweiList) {
             String status = (huawei.getStock() > 0) ? "✅ Verfügbar: " + huawei.getStock() : "❌ Nicht verfügbar";
-            System.out.println("📌 " + huawei.getName() + " " + huawei.getModel() + " | 💰 " + huawei.getPrice() + "€ | " + status);
+            System.out.println("📌 " + huawei.getName() + " " + huawei.getModel() +
+                    " | 🏳️ " + huawei.getColor() +
+                    " | 💾 " + huawei.getStorage() +
+                    " | 💰 " + huawei.getPrice() + "€ | " + status);
         }
     }
 
-    @Override
-    public Huawei findDeviceByModel(String userInput) {
+    public void decreaseStockInDB() {
+        if (getStock() <= 0) {
+            System.out.println("❌ Nicht verfügbar! Huawei ist ausverkauft.");
+            return;
+        }
+
+        String sql = "UPDATE huawei SET stock = stock - 1 WHERE name = ? AND model = ? AND color = ? AND storage = ? AND stock > 0";
+
+        try (Connection connection = DatabaseConnection.getConnection();
+             PreparedStatement stmt = connection.prepareStatement(sql)) {
+
+            stmt.setString(1, getName());
+            stmt.setString(2, getModel());
+            stmt.setString(3, getColor());
+            stmt.setString(4, getStorage());
+
+            int rowsUpdated = stmt.executeUpdate();
+            if (rowsUpdated > 0) {
+                System.out.println("✅ Kauf erfolgreich! Bestand wurde aktualisiert.");
+            } else {
+                System.out.println("❌ Nicht verfügbar oder Fehler beim Aktualisieren.");
+            }
+
+        } catch (SQLException e) {
+            e.printStackTrace();
+            throw new RuntimeException("Fehler beim Aktualisieren des Bestandes.");
+        }
+    }
+
+    public static Huawei findHuaweiByModel(String userInput) {
         if (userInput == null || userInput.trim().isEmpty()) {
+            System.out.println("❌ Ungültige Eingabe! Bitte Modellnamen eingeben.");
             return null;
         }
+
+        ArrayList<Huawei> huaweiList = loadAllHuaweiFromDB();
 
         userInput = userInput.trim().replaceAll("[^a-zA-Z0-9]", "").toLowerCase();
         LevenshteinDistance levenshtein = new LevenshteinDistance();
@@ -48,26 +104,19 @@ public class Huawei extends Handys implements HandyInterface {
         int minDistance = Integer.MAX_VALUE;
         ArrayList<Huawei> besteVorschläge = new ArrayList<>();
 
-        for (Huawei huawei : huaweis) {
-            String model = huawei.getModel().replaceAll("\\s+", "").toLowerCase();
+        for (Huawei huawei : huaweiList) {
             String fullName = (huawei.getName() + huawei.getModel()).replaceAll("\\s+", "").toLowerCase();
-            String shortName = huawei.getName().substring(0, 2).toLowerCase() + huawei.getModel();
 
-            if (model.equals(userInput) || fullName.equals(userInput) || shortName.equals(userInput)) {
+            if (fullName.equals(userInput)) {
                 return huawei;
             }
 
-            int distanceModel = levenshtein.apply(model, userInput);
-            int distanceFullName = levenshtein.apply(fullName, userInput);
-            int distanceShortName = levenshtein.apply(shortName, userInput);
-
-            int minCurrent = Math.min(distanceModel, Math.min(distanceFullName, distanceShortName));
-
-            if (minCurrent < minDistance) {
-                minDistance = minCurrent;
+            int distance = levenshtein.apply(fullName, userInput);
+            if (distance < minDistance) {
+                minDistance = distance;
                 besteVorschläge.clear();
                 besteVorschläge.add(huawei);
-            } else if (minCurrent == minDistance) {
+            } else if (distance == minDistance) {
                 besteVorschläge.add(huawei);
             }
         }
@@ -79,7 +128,6 @@ public class Huawei extends Handys implements HandyInterface {
             }
 
             System.out.print("👉 Möchten Sie dieses Modell wählen? (Ja/Nein): ");
-            Scanner scanner = new Scanner(System.in);
             String confirmation = scanner.nextLine().trim().toLowerCase();
 
             if (confirmation.matches("^(ja|j|yes|y|si|oui|aye|jo|yep|yup)$")) {
@@ -90,6 +138,17 @@ public class Huawei extends Handys implements HandyInterface {
             }
         }
 
+        System.out.println("❌ Kein passendes Modell gefunden.");
         return null;
+    }
+
+    @Override
+    public void showAllDevices() {
+        showAllHuawei();
+    }
+
+    @Override
+    public Handys findDeviceByModel(String userInput) {
+        return findHuaweiByModel(userInput);
     }
 }
