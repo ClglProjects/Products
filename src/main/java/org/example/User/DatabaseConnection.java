@@ -15,28 +15,20 @@ public class DatabaseConnection {
 
     static {
         try {
-            // Lädt die Konfigurationsdatei
             Properties props = new Properties();
             FileInputStream fis = new FileInputStream("src/main/resources/config.properties");
             props.load(fis);
-
-            // Setze die Verbindungsdaten
             DB_URL = props.getProperty("db.url");
             DB_USER = props.getProperty("db.user");
             DB_PASSWORD = props.getProperty("db.password");
-
         } catch (IOException e) {
             e.printStackTrace();
             throw new RuntimeException("Fehler beim Laden der Konfigurationsdatei.");
         }
     }
-
-    // Verbindung zur Datenbank herstellen
     public static Connection getConnection() {
         try {
-            Connection connection = DriverManager.getConnection(DB_URL, DB_USER, DB_PASSWORD);
-            System.out.println("✅ Verbindung zur Datenbank erfolgreich!");
-            return connection;
+            return DriverManager.getConnection(DB_URL, DB_USER, DB_PASSWORD);
         } catch (SQLException e) {
             e.printStackTrace();
             throw new RuntimeException("Fehler bei der Datenbankverbindung.");

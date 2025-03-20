@@ -3,13 +3,13 @@ package org.example.HandyMarken;
 public class Handys extends HandyProdukte {
     private int stock;
 
-    public Handys(String thename, String themodel, String thebrand, double theprice, int stock) {
-        super(thename, themodel, thebrand, theprice);
+    public Handys(String name, String model, String brand, String color, String storage, double price, int stock) {
+        super(name, model, brand, color, storage, price);
         this.stock = stock;
     }
 
     public void zeigeBetriebssystem() {
-        System.out.println(getName() + " läuft auf " );
+        System.out.println(getName() + " läuft auf ");
     }
 
     public int getStock() {
@@ -20,7 +20,6 @@ public class Handys extends HandyProdukte {
         this.stock = stock;
     }
 
-
     public void decreaseStock() {
         if (stock > 0) {
             stock--;
@@ -29,14 +28,4 @@ public class Handys extends HandyProdukte {
             System.out.println("❌ Nicht verfügbar! Dieses Gerät ist ausverkauft.");
         }
     }
-
-
-
-
-
-
-
 }
-
-
-

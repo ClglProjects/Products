@@ -1,46 +1,89 @@
 package org.example.HandyMarken;
 
+import org.apache.commons.text.similarity.LevenshteinDistance;
+import org.example.User.DatabaseConnection;
+
+import java.sql.*;
 import java.util.ArrayList;
 import java.util.Scanner;
-import org.apache.commons.text.similarity.LevenshteinDistance;
 
 public class Xiaomi extends Handys implements HandyInterface {
-    private static ArrayList<Xiaomi> xiaomis = new ArrayList<>();
 
-    public Xiaomi(String name, String model, String brand, double price, int stock) {
-        super(name, model, brand, price, stock);
+    private static final Scanner scanner = new Scanner(System.in);
+
+    public Xiaomi(String name, String model, String brand, String color, String storage, double price, int stock) {
+        super(name, model, brand, color, storage, price, stock);
     }
 
-    static {
-        xiaomis.add(new Xiaomi("Xiaomi", "Mi 10", "Xiaomi", 349.99, 15));         // 2020
-        xiaomis.add(new Xiaomi("Xiaomi", "Mi 11", "Xiaomi", 499.99, 20));         // 2021
-        xiaomis.add(new Xiaomi("Xiaomi", "Mi 11 Ultra", "Xiaomi", 799.99, 10));   // 2021
-        xiaomis.add(new Xiaomi("Xiaomi", "12", "Xiaomi", 649.99, 18));            // 2022
-        xiaomis.add(new Xiaomi("Xiaomi", "12 Pro", "Xiaomi", 849.99, 12));        // 2022
-        xiaomis.add(new Xiaomi("Xiaomi", "13", "Xiaomi", 899.99, 22));            // 2023
-        xiaomis.add(new Xiaomi("Xiaomi", "13 Pro", "Xiaomi", 1099.99, 8));        // 2023
-        xiaomis.add(new Xiaomi("Xiaomi", "14", "Xiaomi", 1199.99, 5));            // 2024
-        xiaomis.add(new Xiaomi("Xiaomi", "14 Ultra", "Xiaomi", 1399.99, 3));      // 2024
+    public static ArrayList<Xiaomi> loadAllXiaomisFromDB() {
+        ArrayList<Xiaomi> xiaomiList = new ArrayList<>();
+
+        String sql = "SELECT name, model, brand, color, storage, price, stock FROM xiaomi";
+
+        try (Connection connection = DatabaseConnection.getConnection();
+             PreparedStatement stmt = connection.prepareStatement(sql);
+             ResultSet rs = stmt.executeQuery()) {
+
+            while (rs.next()) {
+                xiaomiList.add(new Xiaomi(
+                        rs.getString("name"),
+                        rs.getString("model"),
+                        rs.getString("brand"),
+                        rs.getString("color"),
+                        rs.getString("storage"),
+                        rs.getDouble("price"),
+                        rs.getInt("stock")
+                ));
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+            throw new RuntimeException("Fehler beim Laden der Xiaomi-Geräte aus der DB.");
+        }
+
+        return xiaomiList;
     }
 
-    @Override
-    public void showAllDevices() {
+    public static void showAllXiaomis() {
+        ArrayList<Xiaomi> xiaomiList = loadAllXiaomisFromDB();
+
         System.out.println("\n📌 Verfügbare Xiaomi-Geräte:");
-        if (xiaomis.isEmpty()) {
+        if (xiaomiList.isEmpty()) {
             System.out.println("❌ Keine Xiaomi-Geräte verfügbar.");
             return;
         }
-        for (Xiaomi xiaomi : xiaomis) {
+
+        for (Xiaomi xiaomi : xiaomiList) {
             String status = (xiaomi.getStock() > 0) ? "✅ Verfügbar: " + xiaomi.getStock() : "❌ Nicht verfügbar";
-            System.out.println("📌 " + xiaomi.getName() + " " + xiaomi.getModel() + " | 💰 " + xiaomi.getPrice() + "€ | " + status);
+            System.out.println("📌 " + xiaomi.getName() + " " + xiaomi.getModel() + " (" + xiaomi.getColor() + ", " + xiaomi.getStorage() + ") | 💰 " + xiaomi.getPrice() + "€ | " + status);
         }
     }
 
-    @Override
-    public Xiaomi findDeviceByModel(String userInput) {
-        if (userInput == null || userInput.trim().isEmpty()) {
-            return null;
+    public void decreaseStockInDB() {
+        String sql = "UPDATE xiaomi SET stock = stock - 1 WHERE name = ? AND model = ? AND color = ? AND storage = ? AND stock > 0";
+
+        try (Connection connection = DatabaseConnection.getConnection();
+             PreparedStatement stmt = connection.prepareStatement(sql)) {
+
+            stmt.setString(1, getName());
+            stmt.setString(2, getModel());
+            stmt.setString(3, getColor());
+            stmt.setString(4, getStorage());
+
+            int updatedRows = stmt.executeUpdate();
+
+            if (updatedRows > 0) {
+                System.out.println("✅ Kauf erfolgreich! Bestand wurde aktualisiert.");
+            } else {
+                System.out.println("❌ Nicht verfügbar oder Fehler beim Aktualisieren.");
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+            throw new RuntimeException("Fehler beim Aktualisieren des Bestandes.");
         }
+    }
+
+    public static Xiaomi findXiaomiByModel(String userInput) {
+        ArrayList<Xiaomi> xiaomiList = loadAllXiaomisFromDB();
 
         userInput = userInput.trim().replaceAll("[^a-zA-Z0-9]", "").toLowerCase();
         LevenshteinDistance levenshtein = new LevenshteinDistance();
@@ -48,26 +91,19 @@ public class Xiaomi extends Handys implements HandyInterface {
         int minDistance = Integer.MAX_VALUE;
         ArrayList<Xiaomi> besteVorschläge = new ArrayList<>();
 
-        for (Xiaomi xiaomi : xiaomis) {
-            String model = xiaomi.getModel().replaceAll("\\s+", "").toLowerCase();
+        for (Xiaomi xiaomi : xiaomiList) {
             String fullName = (xiaomi.getName() + xiaomi.getModel()).replaceAll("\\s+", "").toLowerCase();
-            String shortName = xiaomi.getName().substring(0, 2).toLowerCase() + xiaomi.getModel();
 
-            if (model.equals(userInput) || fullName.equals(userInput) || shortName.equals(userInput)) {
+            if (fullName.equals(userInput)) {
                 return xiaomi;
             }
 
-            int distanceModel = levenshtein.apply(model, userInput);
-            int distanceFullName = levenshtein.apply(fullName, userInput);
-            int distanceShortName = levenshtein.apply(shortName, userInput);
-
-            int minCurrent = Math.min(distanceModel, Math.min(distanceFullName, distanceShortName));
-
-            if (minCurrent < minDistance) {
-                minDistance = minCurrent;
+            int distance = levenshtein.apply(fullName, userInput);
+            if (distance < minDistance) {
+                minDistance = distance;
                 besteVorschläge.clear();
                 besteVorschläge.add(xiaomi);
-            } else if (minCurrent == minDistance) {
+            } else if (distance == minDistance) {
                 besteVorschläge.add(xiaomi);
             }
         }
@@ -75,11 +111,10 @@ public class Xiaomi extends Handys implements HandyInterface {
         if (!besteVorschläge.isEmpty() && minDistance <= 3) {
             System.out.println("❓ Meinten Sie vielleicht eines dieser Modelle?");
             for (Xiaomi vorschlag : besteVorschläge) {
-                System.out.println("   ➜ " + vorschlag.getName() + " " + vorschlag.getModel());
+                System.out.println("   ➜ " + vorschlag.getName() + " " + vorschlag.getModel() + " (" + vorschlag.getColor() + ", " + vorschlag.getStorage() + ")");
             }
 
             System.out.print("👉 Möchten Sie dieses Modell wählen? (Ja/Nein): ");
-            Scanner scanner = new Scanner(System.in);
             String confirmation = scanner.nextLine().trim().toLowerCase();
 
             if (confirmation.matches("^(ja|j|yes|y|si|oui|aye|jo|yep|yup)$")) {
@@ -89,7 +124,16 @@ public class Xiaomi extends Handys implements HandyInterface {
                 return null;
             }
         }
-
         return null;
+    }
+
+    @Override
+    public void showAllDevices() {
+        showAllXiaomis();
+    }
+
+    @Override
+    public Handys findDeviceByModel(String userInput) {
+        return findXiaomiByModel(userInput);
     }
 }
