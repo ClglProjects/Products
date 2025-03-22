@@ -1,4 +1,4 @@
-package org.example.User;
+package Warenwirtschaft.produkte.User;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -68,13 +68,14 @@ public class AuthSystem {
             if (rs.next()) {
                 String storedPassword = rs.getString("password");
                 if (storedPassword.equals(password)) {
-                    // Passwörter stimmen überein, erstelle User-Objekt
+                    // Passwörter stimmen überein, erstelle User-Objekt mit Admin-Status
                     int id = rs.getInt("id");
                     String dbUsername = rs.getString("username");
                     String dbEmail = rs.getString("email");
                     String dbPhone = rs.getString("phone");
+                    boolean isAdmin = rs.getBoolean("is_admin");  // Holt den Admin-Status aus der DB
 
-                    return new User(id, dbUsername, storedPassword, dbEmail, dbPhone);
+                    return new User(id, dbUsername, storedPassword, dbEmail, dbPhone, isAdmin);
                 }
             }
 
