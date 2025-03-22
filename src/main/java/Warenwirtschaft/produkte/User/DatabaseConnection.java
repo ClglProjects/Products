@@ -1,4 +1,4 @@
-package org.example.User;
+package Warenwirtschaft.produkte.User;
 
 import java.io.FileInputStream;
 import java.io.IOException;
