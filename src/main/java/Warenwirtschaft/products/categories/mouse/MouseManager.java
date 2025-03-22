@@ -105,38 +105,67 @@ public class MouseManager extends ProduktManager<Mouse> {
      * Verringert den Lagerbestand einer Maus um 1.
      */
     public void decreaseStock(Mouse mouse) {
-        String sql = """
-            UPDATE mouses
-            SET stock = stock - 1
-            WHERE brand_id = ? AND model = ? AND color = ? AND connection_type = ? AND stock > 0
-        """;
+        String selectSql = """
+        SELECT mv.id
+        FROM mouse_variants mv
+        JOIN mouses m ON mv.mouse_id = m.id
+        WHERE m.model = ? AND m.brand_id = ?
+          AND mv.color = ? AND mv.connection_type = ? AND mv.stock > 0
+        LIMIT 1
+    """;
+
+        String updateSql = """
+        UPDATE mouse_variants
+        SET stock = stock - 1
+        WHERE id = ?
+    """;
 
         try (Connection conn = DatabaseConnection.getConnection();
-             PreparedStatement stmt = conn.prepareStatement(sql)) {
+             PreparedStatement selectStmt = conn.prepareStatement(selectSql)) {
 
-            stmt.setInt(1, mouse.getBrandId());
-            stmt.setString(2, mouse.getModel());
-            stmt.setString(3, mouse.getColor());
-            stmt.setString(4, mouse.getConnectionType());
+            selectStmt.setString(1, mouse.getModel());
+            selectStmt.setInt(2, mouse.getBrandId());
+            selectStmt.setString(3, mouse.getColor());
+            selectStmt.setString(4, mouse.getConnectionType());
 
-            int updated = stmt.executeUpdate();
+            ResultSet rs = selectStmt.executeQuery();
+            if (rs.next()) {
+                int variantId = rs.getInt("id");
 
-            if (updated > 0) {
-                System.out.println("✅ Bestand aktualisiert.");
+                try (PreparedStatement updateStmt = conn.prepareStatement(updateSql)) {
+                    updateStmt.setInt(1, variantId);
+                    int updated = updateStmt.executeUpdate();
+
+                    if (updated > 0) {
+                        System.out.println("✅ Maus-Bestand erfolgreich reduziert.");
+                    } else {
+                        System.out.println("❌ Maus nicht gefunden oder ausverkauft.");
+                    }
+                }
+
             } else {
-                System.out.println("❌ Produkt nicht gefunden oder ausverkauft.");
+                System.out.println("❌ Keine passende Variante mit Bestand gefunden.");
             }
 
         } catch (SQLException e) {
-            System.out.println("❌ Fehler beim Aktualisieren des Lagerbestands.");
+            System.out.println("❌ Fehler beim Aktualisieren des Maus-Bestands.");
             e.printStackTrace();
         }
     }
+
+
+
+
     public List<Mouse> getModelVariants(String model, int brandId) {
         List<Mouse> variants = new ArrayList<>();
+
         String sql = """
-        SELECT * FROM mouses
-        WHERE model = ? AND brand_id = ?
+        SELECT mv.color, mv.connection_type, mv.rgb, mv.dpi, mv.buttons, mv.battery_life,
+               mv.price, mv.stock, mv.brandname,
+               m.model, m.brand_id, m.category_id
+        FROM mouse_variants mv
+        JOIN mouses m ON mv.mouse_id = m.id
+        WHERE m.model = ? AND m.brand_id = ?
     """;
 
         try (Connection conn = DatabaseConnection.getConnection();
@@ -148,7 +177,7 @@ public class MouseManager extends ProduktManager<Mouse> {
 
             while (rs.next()) {
                 Mouse mouse = new Mouse(
-                        rs.getString("brand_name"),
+                        rs.getString("brandname"),
                         rs.getString("model"),
                         rs.getInt("brand_id"),
                         rs.getInt("category_id"),
@@ -171,6 +200,7 @@ public class MouseManager extends ProduktManager<Mouse> {
 
         return variants;
     }
+
 
 
 

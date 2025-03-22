@@ -19,13 +19,13 @@ public class LaptopManager {
 
             while (rs.next()) {
                 Laptops laptop = new Laptops(
-                        rs.getString("brand_name"),
+                        rs.getString("brandname"),
                         rs.getString("model"),
                         rs.getInt("brand_id"),
                         rs.getInt("category_id"),
                         rs.getString("processor"),
                         rs.getDouble("screen_size"),
-                        rs.getDouble("battery_life"),
+                        rs.getString("battery_life"),
                         rs.getInt("ram"),
                         rs.getString("storage"),
                         rs.getString("color"),
@@ -44,28 +44,49 @@ public class LaptopManager {
     }
 
     public void decreaseStock(Laptops laptop) {
-        String sql = """
-            UPDATE laptops
-            SET stock = stock - 1
-            WHERE brand_id = ? AND model = ? AND processor = ? AND ram = ? AND color = ? AND storage = ? AND stock > 0
+        String selectSql = """
+        SELECT lv.id
+        FROM laptop_variants lv
+        JOIN laptops l ON lv.laptop_id = l.id
+        WHERE l.model = ? AND l.brand_id = ?
+          AND lv.ram = ? AND lv.color = ? AND lv.storage = ? AND lv.stock > 0
+        LIMIT 1
+        """;
+
+        String updateSql = """
+        UPDATE laptop_variants
+        SET stock = stock - 1
+        WHERE id = ?
         """;
 
         try (Connection conn = DatabaseConnection.getConnection();
-             PreparedStatement stmt = conn.prepareStatement(sql)) {
+             PreparedStatement selectStmt = conn.prepareStatement(selectSql)) {
 
-            stmt.setInt(1, laptop.getBrandId());
-            stmt.setString(2, laptop.getModel());
-            stmt.setString(3, laptop.getProcessor());
-            stmt.setInt(4, laptop.getRam());
-            stmt.setString(5, laptop.getColor());
-            stmt.setString(6, laptop.getStorage());
+            // Step 1: ID der Variante holen
+            selectStmt.setString(1, laptop.getModel());
+            selectStmt.setInt(2, laptop.getBrandId());
+            selectStmt.setInt(3, laptop.getRam());
+            selectStmt.setString(4, laptop.getColor());
+            selectStmt.setString(5, laptop.getStorage());
 
-            int updated = stmt.executeUpdate();
+            ResultSet rs = selectStmt.executeQuery();
+            if (rs.next()) {
+                int variantId = rs.getInt("id");
 
-            if (updated > 0) {
-                System.out.println("✅ Bestand erfolgreich reduziert.");
+                // Step 2: Bestandsupdate durchführen
+                try (PreparedStatement updateStmt = conn.prepareStatement(updateSql)) {
+                    updateStmt.setInt(1, variantId);
+                    int updated = updateStmt.executeUpdate();
+
+                    if (updated > 0) {
+                        System.out.println("✅ Bestand erfolgreich reduziert.");
+                    } else {
+                        System.out.println("❌ Bestand konnte nicht aktualisiert werden.");
+                    }
+                }
+
             } else {
-                System.out.println("❌ Produkt nicht gefunden oder ausverkauft.");
+                System.out.println("❌ Keine passende Variante mit Lagerbestand gefunden.");
             }
 
         } catch (SQLException e) {
@@ -74,12 +95,19 @@ public class LaptopManager {
         }
     }
 
+
+
+
     public List<Laptops> getModelVariants(String model, int brandId) {
         List<Laptops> variants = new ArrayList<>();
+
         String sql = """
-        SELECT * FROM laptops
-        WHERE model = ? AND brand_id = ?
-    """;
+        SELECT lv.ram, lv.storage, lv.color, lv.price, lv.stock, lv.brandname,
+               l.model, l.brand_id, l.category_id, l.processor, l.screen_size, l.battery_life
+        FROM laptop_variants lv
+        JOIN laptops l ON lv.laptop_id = l.id
+        WHERE l.model = ? AND l.brand_id = ?
+        """;
 
         try (Connection conn = DatabaseConnection.getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql)) {
@@ -90,13 +118,13 @@ public class LaptopManager {
 
             while (rs.next()) {
                 Laptops laptop = new Laptops(
-                        rs.getString("brand_name"),
+                        rs.getString("brandname"),
                         rs.getString("model"),
                         rs.getInt("brand_id"),
                         rs.getInt("category_id"),
                         rs.getString("processor"),
                         rs.getDouble("screen_size"),
-                        rs.getDouble("battery_life"),
+                        rs.getString("battery_life"),
                         rs.getInt("ram"),
                         rs.getString("storage"),
                         rs.getString("color"),

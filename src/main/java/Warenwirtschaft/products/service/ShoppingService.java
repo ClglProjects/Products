@@ -16,7 +16,7 @@ public class ShoppingService<T extends VariantProdukt> {
         this.varianten = varianten;
     }
 
-    public T chooseVariantFromList(Scanner scanner) {
+    public VariantProdukt chooseVariantFromList(Scanner scanner) {
         System.out.println("\n📱 Verfügbare Varianten:");
         for (int i = 0; i < varianten.size(); i++) {
             System.out.printf("%d️⃣ %s\n", i + 1, varianten.get(i).getDisplayInfo());
@@ -31,7 +31,7 @@ public class ShoppingService<T extends VariantProdukt> {
         return varianten.get(auswahl - 1);
     }
 
-    public void addToCartIfConfirmed(T produkt, User user, Scanner scanner) {
+    public void addToCartIfConfirmed(VariantProdukt produkt, User user, Scanner scanner) {
         System.out.print("👉 Möchtest du dieses Modell kaufen? (ja/nein): ");
         String confirm = scanner.nextLine().trim().toLowerCase();
 
