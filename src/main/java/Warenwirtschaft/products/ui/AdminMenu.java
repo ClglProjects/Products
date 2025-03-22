@@ -1,7 +1,7 @@
-package Warenwirtschaft.produkte.Menu;
+package Warenwirtschaft.products.ui;
 
-import Warenwirtschaft.produkte.User.DatabaseConnection;
-import Warenwirtschaft.produkte.User.User;
+import Warenwirtschaft.products.user.DatabaseConnection;
+import Warenwirtschaft.products.user.User;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -109,27 +109,27 @@ public class AdminMenu {
         }
     }
 
-        private static void manageDevices() {
-            System.out.println("\n📌 Geräte-Verwaltung:");
-            System.out.println("1️⃣ Neues Gerät hinzufügen");
-            System.out.println("2️⃣ Gerät entfernen");
-            System.out.println("3️⃣ Zurück");
-            System.out.print("👉 Wähle eine Option: ");
+    private static void manageDevices() {
+        System.out.println("\n📌 Geräte-Verwaltung:");
+        System.out.println("1️⃣ Neues Gerät hinzufügen");
+        System.out.println("2️⃣ Gerät entfernen");
+        System.out.println("3️⃣ Zurück");
+        System.out.print("👉 Wähle eine Option: ");
 
-            String choice = scanner.nextLine();
-            switch (choice) {
-                case "1":
-                    addNewDevice();
-                    break;
-                case "2":
-                    removeDevice();
-                    break;
-                case "3":
-                    return;
-                default:
-                    System.out.println("❌ Ungültige Eingabe!");
-            }
+        String choice = scanner.nextLine();
+        switch (choice) {
+            case "1":
+                addNewDevice();
+                break;
+            case "2":
+                removeDevice();
+                break;
+            case "3":
+                return;
+            default:
+                System.out.println("❌ Ungültige Eingabe!");
         }
+    }
 
     private static void addNewDevice() {
         String name = null, model = null, brand = null, color = null, storage = null;

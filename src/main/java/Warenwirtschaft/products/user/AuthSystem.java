@@ -1,4 +1,4 @@
-package Warenwirtschaft.produkte.User;
+package Warenwirtschaft.products.user;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;

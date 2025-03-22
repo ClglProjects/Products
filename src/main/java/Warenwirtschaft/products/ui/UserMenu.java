@@ -1,19 +1,17 @@
-package Warenwirtschaft.produkte.Menu;
+package Warenwirtschaft.products.ui;
 
-import Warenwirtschaft.produkte.Elektronik.Handys.Handys;
-import Warenwirtschaft.produkte.Marken.Marken;
-import Warenwirtschaft.produkte.User.AuthSystem;
-import Warenwirtschaft.produkte.User.DatabaseConnection;
-import Warenwirtschaft.produkte.User.User;
+import Warenwirtschaft.products.user.AuthSystem;
 
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
+import Warenwirtschaft.products.user.User;
+import Warenwirtschaft.products.model.VariantProdukt;
+import Warenwirtschaft.products.service.ProductService;
+import Warenwirtschaft.products.service.ShoppingService;
 import java.util.*;
 
 public class UserMenu {
+
     private static final Scanner scanner = new Scanner(System.in);
+    private static final ProductService productService = new ProductService();
     private static User loggedInUser = null;
 
     public static void showMainMenu() {
@@ -52,7 +50,7 @@ public class UserMenu {
 
     private static void showUserMenu() {
         while (true) {
-            List<String> availableBrands = getAvailableBrands();
+            List<String> availableBrands = productService.getAllBrands();
             Collections.sort(availableBrands);
 
             System.out.println("\n📌 Willkommen zurück, " + loggedInUser.getUsername() + "!");
@@ -91,7 +89,7 @@ public class UserMenu {
     }
 
     private static void showCategoryForBrand(String brand) {
-        List<String> categories = getAvailableCategoriesForBrand(brand);
+        List<String> categories = productService.getCategoriesForBrand(brand);
 
         if (categories.isEmpty()) {
             System.out.println("❌ Für diese Marke sind derzeit keine Kategorien verfügbar.");
@@ -116,8 +114,7 @@ public class UserMenu {
 
     private static void showProductsForCategory(String brand, String category) {
         while (true) {
-            List<String> products = getAvailableProductsForCategory(brand, category);
-
+            List<String> products = productService.getProductsForCategory(brand, category);
             if (products.isEmpty()) {
                 System.out.println("❌ In dieser Kategorie sind derzeit keine Produkte verfügbar.");
                 return;
@@ -135,7 +132,7 @@ public class UserMenu {
             int selectedOption = Integer.parseInt(scanner.nextLine());
             if (selectedOption > 0 && selectedOption <= products.size()) {
                 String selectedProduct = products.get(selectedOption - 1);
-                handleDeviceSelection(selectedProduct, brand);
+                handleDeviceSelection(selectedProduct, brand, category);
             } else if (selectedOption == products.size() + 1) {
                 return;
             }
@@ -143,51 +140,7 @@ public class UserMenu {
     }
 
 
-    private static List<String> getAvailableCategoriesForBrand(String brand) {
-        List<String> categories = new ArrayList<>();
-        String sql = "SELECT DISTINCT category FROM products WHERE brand = ? ORDER BY category ASC";
-
-        try (Connection connection = DatabaseConnection.getConnection();
-             PreparedStatement stmt = connection.prepareStatement(sql)) {
-
-            stmt.setString(1, brand);
-            ResultSet rs = stmt.executeQuery();
-
-            while (rs.next()) {
-                categories.add(rs.getString("category"));
-            }
-
-        } catch (SQLException e) {
-            System.out.println("❌ Fehler beim Abrufen der Kategorien für " + brand);
-            e.printStackTrace();
-        }
-        return categories;
-    }
-
-    private static List<String> getAvailableProductsForCategory(String brand, String category) {
-        List<String> products = new ArrayList<>();
-        String sql = "SELECT DISTINCT model FROM products WHERE brand = ? AND category = ? ORDER BY model ASC";
-
-        try (Connection connection = DatabaseConnection.getConnection();
-             PreparedStatement stmt = connection.prepareStatement(sql)) {
-
-            stmt.setString(1, brand);
-            stmt.setString(2, category);
-            ResultSet rs = stmt.executeQuery();
-
-            while (rs.next()) {
-                products.add(rs.getString("model"));
-            }
-
-        } catch (SQLException e) {
-            System.out.println("❌ Fehler beim Abrufen der Produkte für " + category + " von " + brand);
-            e.printStackTrace();
-        }
-        return products;
-    }
-
-
-private static void loginUser() {
+    private static void loginUser() {
         System.out.print("👉 Benutzername: ");
         String username = scanner.nextLine();
         System.out.print("👉 Passwort: ");
@@ -222,108 +175,18 @@ private static void loginUser() {
         }
     }
 
-    private static List<String> getAvailableBrands() {
-        List<String> brands = new ArrayList<>();
-        String sql = "SELECT DISTINCT brand FROM products ORDER BY brand ASC";
+    private static void handleDeviceSelection(String model, String brand, String category) {
+        int brandId = productService.getBrandId(brand);
 
-        try (Connection connection = DatabaseConnection.getConnection();
-             PreparedStatement stmt = connection.prepareStatement(sql);
-             ResultSet rs = stmt.executeQuery()) {
+        List<VariantProdukt> varianten = new ArrayList<>(productService.getVariantsForModelAndCategory(model, brandId, category));
 
-            while (rs.next()) {
-                String brand = rs.getString("brand").toUpperCase(); // Einheitlich groß schreiben
-                if (!brands.contains(brand)) {
-                    brands.add(brand);
-                }
-            }
+        ShoppingService<VariantProdukt> service = new ShoppingService<>(varianten);
+        VariantProdukt ausgewählt = service.chooseVariantFromList(scanner);
 
-        } catch (SQLException e) {
-            System.out.println("❌ Fehler beim Abrufen der Marken.");
-            e.printStackTrace();
-        }
-
-        return brands;
-    }
-
-
-
-    private static void handleDeviceSelection(String model, String brand) {
-        int brandId = getBrandIdByName(brand);         // ✅ funktioniert
-        List<Handys> varianten = Handys.getModelVariants(model, brandId);
-
-        if (varianten.isEmpty()) {
-            System.out.println("❌ Keine Varianten für dieses Modell gefunden.");
-            return;
-        }
-
-        System.out.println("\n📱 Verfügbare Varianten für Modell '" + model + "':");
-        for (int i = 0; i < varianten.size(); i++) {
-            Handys handy = varianten.get(i);
-            System.out.printf("%d️⃣ %s (%s, %s) | 💰 %.2f€ | Bestand: %d\n",
-                    (i + 1), handy.getModel(), handy.getColor(), handy.getStorage(), handy.getPrice(), handy.getStock());
-        }
-
-        System.out.println((varianten.size() + 1) + "️⃣ Zurück");
-        System.out.print("👉 Wähle eine Variante: ");
-
-        int auswahl = safeIntInput(1, varianten.size() + 1);
-
-        if (auswahl == varianten.size() + 1) {
-            return; // Zurück
-        }
-
-        Handys gewähltesHandy = varianten.get(auswahl - 1);
-
-        System.out.print("👉 Möchtest du dieses Modell kaufen? (ja/nein): ");
-        String confirm = scanner.nextLine().trim().toLowerCase();
-
-        if (confirm.matches("ja|j|yes|y")) {
-            gewähltesHandy.decreaseStockInDB();
-            loggedInUser.getCart().addToCart(gewähltesHandy);
-            System.out.println("✅ Produkt wurde zum Warenkorb hinzugefügt!");
+        if (ausgewählt != null) {
+            service.addToCartIfConfirmed(ausgewählt, loggedInUser, scanner);
         }
     }
-
-
-
-    private static int safeIntInput(int min, int max) {
-        while (true) {
-            try {
-                String input = scanner.nextLine().trim();
-                int number = Integer.parseInt(input);
-
-                if (number >= min && number <= max) {
-                    return number;
-                } else {
-                    System.out.print("❌ Bitte gib eine Zahl zwischen " + min + " und " + max + " ein: ");
-                }
-            } catch (NumberFormatException e) {
-                System.out.print("❌ Ungültige Eingabe! Bitte eine Zahl eingeben: ");
-            }
-        }
-    }
-
-
-    private static int getBrandIdByName(String brandName) {
-        String sql = "SELECT id FROM brands WHERE UPPER(name) = ?";
-        try (Connection connection = DatabaseConnection.getConnection();
-             PreparedStatement stmt = connection.prepareStatement(sql)) {
-
-            stmt.setString(1, brandName.toUpperCase());
-            ResultSet rs = stmt.executeQuery();
-
-            if (rs.next()) {
-                return rs.getInt("id");
-            }
-
-        } catch (SQLException e) {
-            System.out.println("❌ Fehler beim Suchen der Brand-ID für: " + brandName);
-            e.printStackTrace();
-        }
-        return -1;
-    }
-
-
 
 
 }

@@ -1,6 +1,6 @@
-package Warenwirtschaft.produkte.User;
+package Warenwirtschaft.products.user;
 
-import Warenwirtschaft.produkte.Shop.Cart;
+import Warenwirtschaft.products.order.Cart;
 
 public class User {
     private int id;
