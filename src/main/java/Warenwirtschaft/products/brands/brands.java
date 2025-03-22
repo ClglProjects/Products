@@ -1,13 +1,13 @@
-package Warenwirtschaft.produkte.Marken;
+package Warenwirtschaft.products.brands;
 
-import Warenwirtschaft.produkte.User.DatabaseConnection;
+import Warenwirtschaft.products.user.DatabaseConnection;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 
-public class Marken {
+public class brands {
 
     public static String getMarkenName(int brandId) {
         String sql = "SELECT name FROM brands WHERE id = ?";
