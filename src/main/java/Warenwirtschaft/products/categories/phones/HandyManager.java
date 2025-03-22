@@ -13,8 +13,11 @@ public class HandyManager extends ProduktManager<Handys> {
     public List<Handys> loadAllByBrandId(int brandId) {
         List<Handys> handyList = new ArrayList<>();
         String sql = """
-            SELECT h.model, h.brand_id, h.category_id, h.color, h.storage, h.price, h.stock, b.name AS brand_name
+            SELECT h.model, h.brand_id, h.category_id, 
+                   hv.color, hv.storage, hv.price, hv.stock, 
+                   b.name AS brand_name
             FROM handys h
+            JOIN handy_variants hv ON h.id = hv.handy_id
             JOIN brands b ON h.brand_id = b.id
             WHERE h.brand_id = ?
         """;
@@ -49,9 +52,14 @@ public class HandyManager extends ProduktManager<Handys> {
 
     public List<Handys> getModelVariants(String model, int brandId) {
         List<Handys> variants = new ArrayList<>();
+
         String sql = """
-            SELECT h.*, b.name AS brand_name
-            FROM handys h
+            SELECT 
+                hv.color, hv.storage, hv.price, hv.stock,
+                h.model, h.brand_id, h.category_id,
+                b.name AS brand_name
+            FROM handy_variants hv
+            JOIN handys h ON hv.handy_id = h.id
             JOIN brands b ON h.brand_id = b.id
             WHERE h.model = ? AND h.brand_id = ?
         """;
@@ -61,8 +69,8 @@ public class HandyManager extends ProduktManager<Handys> {
 
             stmt.setString(1, model);
             stmt.setInt(2, brandId);
-
             ResultSet rs = stmt.executeQuery();
+
             while (rs.next()) {
                 variants.add(new Handys(
                         rs.getString("brand_name"),
@@ -86,14 +94,18 @@ public class HandyManager extends ProduktManager<Handys> {
 
     @Override
     public List<Handys> loadAllFromDB(int brandId) {
-        return loadAllByBrandId(brandId); // Einfacher Weiterleitung
+        return loadAllByBrandId(brandId);
     }
 
     @Override
     public Handys findByModel(String modelName, int brandId) {
         String sql = """
-            SELECT h.*, b.name AS brand_name
+            SELECT 
+                h.model, h.brand_id, h.category_id,
+                hv.color, hv.storage, hv.price, hv.stock,
+                b.name AS brand_name
             FROM handys h
+            JOIN handy_variants hv ON h.id = hv.handy_id
             JOIN brands b ON h.brand_id = b.id
             WHERE h.model = ? AND h.brand_id = ?
             LIMIT 1
@@ -128,30 +140,49 @@ public class HandyManager extends ProduktManager<Handys> {
     }
 
     public void decreaseStock(Handys handy) {
-        String sql = """
-            UPDATE handys
+        String selectSql = """
+            SELECT hv.id
+            FROM handy_variants hv
+            JOIN handys h ON hv.handy_id = h.id
+            WHERE h.model = ? AND h.brand_id = ? AND hv.color = ? AND hv.storage = ? AND hv.stock > 0
+            LIMIT 1
+        """;
+
+        String updateSql = """
+            UPDATE handy_variants
             SET stock = stock - 1
-            WHERE brand_id = ? AND model = ? AND color = ? AND storage = ? AND stock > 0
+            WHERE id = ?
         """;
 
         try (Connection conn = DatabaseConnection.getConnection();
-             PreparedStatement stmt = conn.prepareStatement(sql)) {
+             PreparedStatement selectStmt = conn.prepareStatement(selectSql)) {
 
-            stmt.setInt(1, handy.getBrandId());
-            stmt.setString(2, handy.getModel());
-            stmt.setString(3, handy.getColor());
-            stmt.setString(4, handy.getStorage());
+            selectStmt.setString(1, handy.getModel());
+            selectStmt.setInt(2, handy.getBrandId());
+            selectStmt.setString(3, handy.getColor());
+            selectStmt.setString(4, handy.getStorage());
 
-            int updated = stmt.executeUpdate();
+            ResultSet rs = selectStmt.executeQuery();
+            if (rs.next()) {
+                int variantId = rs.getInt("id");
 
-            if (updated > 0) {
-                System.out.println("✅ Bestand erfolgreich reduziert.");
+                try (PreparedStatement updateStmt = conn.prepareStatement(updateSql)) {
+                    updateStmt.setInt(1, variantId);
+                    int updated = updateStmt.executeUpdate();
+
+                    if (updated > 0) {
+                        System.out.println("✅ Handy-Bestand erfolgreich reduziert.");
+                    } else {
+                        System.out.println("❌ Update fehlgeschlagen.");
+                    }
+                }
+
             } else {
-                System.out.println("❌ Produkt nicht verfügbar oder ausverkauft.");
+                System.out.println("❌ Keine passende Variante mit Lagerbestand gefunden.");
             }
 
         } catch (SQLException e) {
-            System.out.println("❌ Fehler beim Aktualisieren des Lagerbestands.");
+            System.out.println("❌ Fehler beim Reduzieren des Lagerbestands.");
             e.printStackTrace();
         }
     }
