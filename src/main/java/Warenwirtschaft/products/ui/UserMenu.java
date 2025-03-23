@@ -6,6 +6,8 @@ import Warenwirtschaft.products.user.User;
 import Warenwirtschaft.products.model.VariantProdukt;
 import Warenwirtschaft.products.service.ProductService;
 import Warenwirtschaft.products.service.ShoppingService;
+import Warenwirtschaft.products.utils.ConsoleUtils;
+
 import java.util.*;
 
 public class UserMenu {
@@ -42,11 +44,69 @@ public class UserMenu {
                 if (loggedInUser.isAdmin()) {
                     AdminMenu.showAdminMenu();
                 } else {
+                    if(loggedInUser.isAdmin()) {
+                        AdminMenu.showAdminMenu();
+                    } else {
+                        System.out.println("\n🛍️ Wähle deinen Einstieg:");
+                        System.out.println("1️⃣ Nach Kategorie shoppen");
+                        System.out.println("2️⃣ Nach Marke shoppen");
+                        System.out.print("👉 Auswahl: ");
+                        String menuChoice = scanner.nextLine();
+                        if (menuChoice.equals("1")) {
+                            showCategoryFirstMenu(scanner, loggedInUser);
+                        } else {
+                            showUserMenu();
+                        }
+                    }
                     showUserMenu();
                 }
             }
         }
     }
+
+    public static void showCategoryFirstMenu(Scanner scanner, User user) {
+        List<String> categories = productService.getAllCategories();
+
+        System.out.println("\n📦 Wähle eine Produktkategorie:");
+        for (int i = 0; i < categories.size(); i++) {
+            System.out.printf("%d️⃣ %s\n", i + 1, categories.get(i));
+        }
+        System.out.printf("%d️⃣ Zurück\n", categories.size() + 1);
+        System.out.print("👉 Wähle eine Option: ");
+
+        int auswahl = ConsoleUtils.safeIntInput(scanner, 1, categories.size() + 1);
+        if (auswahl == categories.size() + 1) return;
+
+        String selectedCategory = categories.get(auswahl - 1);
+        showBrandsForCategory(scanner, user, selectedCategory);
+    }
+
+    private static void showBrandsForCategory(Scanner scanner, User user, String category) {
+        List<String> brands = productService.getBrandsForCategory(category);
+
+        if (brands.isEmpty()) {
+            System.out.println("❌ Keine Marken verfügbar für Kategorie: " + category);
+            return;
+        }
+
+        System.out.println("\n📦 Du hast '" + category + "' ausgewählt!");
+        System.out.println("🔍 Wähle eine Marke:");
+
+        for (int i = 0; i < brands.size(); i++) {
+            System.out.printf("%d️⃣ %s\n", i + 1, brands.get(i));
+        }
+        System.out.printf("%d️⃣ Zurück zur Kategorieauswahl\n", brands.size() + 1);
+        System.out.print("👉 Wähle eine Option: ");
+
+        int auswahl = ConsoleUtils.safeIntInput(scanner, 1, brands.size() + 1);
+        if (auswahl == brands.size() + 1) return;
+
+        String selectedBrand = brands.get(auswahl - 1);
+        showProductsForCategory(selectedBrand, category);
+    }
+
+
+
 
     private static void showUserMenu() {
         while (true) {

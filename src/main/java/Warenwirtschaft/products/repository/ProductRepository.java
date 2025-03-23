@@ -121,8 +121,60 @@ public class ProductRepository {
     }
 
 
+    public List<String> fetchBrandsForCategory(String category) {
+        List<String> brands = new ArrayList<>();
+        String sql = """
+        SELECT DISTINCT b.name
+        FROM all_products p
+        JOIN brands b ON p.brand_id = b.id
+        JOIN categories c ON p.category_id = c.id
+        WHERE UPPER(c.name) = ?
+        ORDER BY b.name ASC
+    """;
+
+        try (Connection conn = DatabaseConnection.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+
+            stmt.setString(1, category.toUpperCase());
+            ResultSet rs = stmt.executeQuery();
+
+            while (rs.next()) {
+                brands.add(rs.getString("name").toUpperCase());
+            }
+
+        } catch (Exception e) {
+            System.out.println("❌ Fehler beim Abrufen der Marken für Kategorie: " + category);
+            e.printStackTrace();
+        }
+
+        return brands;
+    }
 
 
+    public List<String> fetchAllCategories() {
+        List<String> categories = new ArrayList<>();
+        String sql = """
+        SELECT DISTINCT c.name
+        FROM all_products p
+        JOIN categories c ON p.category_id = c.id
+        ORDER BY c.name ASC
+    """;
+
+        try (Connection connection = DatabaseConnection.getConnection();
+             PreparedStatement stmt = connection.prepareStatement(sql);
+             ResultSet rs = stmt.executeQuery()) {
+
+            while (rs.next()) {
+                categories.add(rs.getString("name"));
+            }
+
+        } catch (Exception e) {
+            System.out.println("❌ Fehler beim Abrufen der Kategorien.");
+            e.printStackTrace();
+        }
+
+        return categories;
+    }
 
 
 
