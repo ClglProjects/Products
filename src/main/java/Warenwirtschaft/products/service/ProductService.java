@@ -24,6 +24,16 @@ public class ProductService {
         return productRepository.fetchProductsForCategory(brand, category);
     }
 
+    public List<String> getBrandsForCategory(String category) {
+        return productRepository.fetchBrandsForCategory(category);
+    }
+
+
+    public List<String> getAllCategories() {
+        return productRepository.fetchAllCategories();
+    }
+
+
     public int getBrandId(String brandName) {
         return productRepository.getBrandIdByName(brandName);
     }
@@ -35,6 +45,6 @@ public class ProductService {
             case "maus", "mouse", "mouses", "mäuse" -> new MouseManager().getModelVariants(model, brandId);
             default -> List.of(); // Leere Liste bei unbekannter Kategorie
         };
-    }
 
-}
+    }
+    }
