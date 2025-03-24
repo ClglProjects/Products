@@ -48,6 +48,19 @@ public class Mouse extends Produkt {
         new MouseManager().decreaseStock(this);
     }
 
+    @Override
+    public String getDisplayInfo() {
+        return String.format("%s (%s, %s, RGB: %s, %d DPI, %d Tasten) | 💰 %.2f€ | Bestand: %d",
+                getModel(),
+                color,
+                connectionType,
+                rgb ? "Ja" : "Nein",
+                dpi,
+                buttons,
+                getPrice(),
+                getStock());
+
+    }
 
 
 

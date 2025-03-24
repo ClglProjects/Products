@@ -107,6 +107,7 @@ public class LaptopManager {
         FROM laptop_variants lv
         JOIN laptops l ON lv.laptop_id = l.id
         WHERE l.model = ? AND l.brand_id = ?
+        ORDER BY lv.ram, lv.storage, lv.color;
         """;
 
         try (Connection conn = DatabaseConnection.getConnection();

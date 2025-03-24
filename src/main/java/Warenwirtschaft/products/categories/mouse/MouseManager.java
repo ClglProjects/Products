@@ -166,6 +166,8 @@ public class MouseManager extends ProduktManager<Mouse> {
         FROM mouse_variants mv
         JOIN mouses m ON mv.mouse_id = m.id
         WHERE m.model = ? AND m.brand_id = ?
+       ORDER BY mv.color, mv.connection_type, mv.rgb;                                  
+        
     """;
 
         try (Connection conn = DatabaseConnection.getConnection();

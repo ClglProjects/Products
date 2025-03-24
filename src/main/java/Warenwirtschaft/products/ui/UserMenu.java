@@ -106,8 +106,6 @@ public class UserMenu {
     }
 
 
-
-
     private static void showUserMenu() {
         while (true) {
             List<String> availableBrands = productService.getAllBrands();
@@ -216,15 +214,59 @@ public class UserMenu {
     }
 
     private static void registerUser() {
-        System.out.print("👉 Benutzername: ");
-        String username = scanner.nextLine();
-        System.out.print("👉 Passwort: ");
-        String password = scanner.nextLine();
-        System.out.print("👉 E-Mail: ");
-        String email = scanner.nextLine();
-        System.out.print("👉 Telefonnummer (optional): ");
-        String phone = scanner.nextLine();
+        String username, password, confirmPassword, email, phone;
 
+        // Benutzername prüfen
+        while (true) {
+            System.out.print("👉 Benutzername: ");
+            username = scanner.nextLine();
+            if (username.matches("^[a-zA-Z0-9]{3,20}$")) break;
+            System.out.println("❌ Benutzername muss 3–20 Zeichen lang sein (nur Buchstaben/Zahlen erlaubt).");
+        }
+
+        // Passwort prüfen + wiederholen
+        while (true) {
+            System.out.print("👉 Passwort: ");
+            password = scanner.nextLine();
+
+            boolean langGenug = password.length() >= 8;
+            boolean hatBuchstabe = password.matches(".*[a-zA-Z].*");
+            boolean hatZahl = password.matches(".*\\d.*");
+            boolean hatSonderzeichen = password.matches(".*[!@#$%^&*()_+\\-=\\[\\]{};':\"\\\\|,.<>/?].*");
+
+            if (!(langGenug && hatBuchstabe && hatZahl && hatSonderzeichen)) {
+                System.out.println("❌ Passwort muss mindestens 8 Zeichen lang sein und mindestens 1 Buchstabe, 1 Zahl und 1 Sonderzeichen enthalten.");
+                continue;
+            }
+
+            System.out.print("🔁 Passwort wiederholen: ");
+            confirmPassword = scanner.nextLine();
+
+            if (!password.equals(confirmPassword)) {
+                System.out.println("❌ Passwörter stimmen nicht überein.");
+                continue;
+            }
+
+            break;
+        }
+
+        // E-Mail prüfen
+        while (true) {
+            System.out.print("👉 E-Mail: ");
+            email = scanner.nextLine();
+            if (email.matches("^[\\w.-]+@[\\w.-]+\\.[a-zA-Z]{2,}$")) break;
+            System.out.println("❌ Ungültige E-Mail-Adresse.");
+        }
+
+        // Telefonnummer optional
+        System.out.print("👉 Telefonnummer (optional): ");
+        phone = scanner.nextLine();
+        if (!phone.isEmpty() && !phone.matches("^[0-9+\\- ]{5,20}$")) {
+            System.out.println("⚠️ Ungültige Telefonnummer – wird ignoriert.");
+            phone = "";
+        }
+
+        // Registrierung
         boolean success = AuthSystem.register(username, password, email, phone);
 
         if (success) {
@@ -234,6 +276,9 @@ public class UserMenu {
             System.out.println("❌ Benutzername oder E-Mail existiert bereits!");
         }
     }
+
+
+
 
     private static void handleDeviceSelection(String model, String brand, String category) {
         int brandId = productService.getBrandId(brand);

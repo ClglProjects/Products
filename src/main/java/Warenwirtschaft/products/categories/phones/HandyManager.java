@@ -62,6 +62,8 @@ public class HandyManager extends ProduktManager<Handys> {
             JOIN handys h ON hv.handy_id = h.id
             JOIN brands b ON h.brand_id = b.id
             WHERE h.model = ? AND h.brand_id = ?
+            ORDER BY hv.color, hv.storage;
+            
         """;
 
         try (Connection conn = DatabaseConnection.getConnection();
