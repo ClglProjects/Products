@@ -35,6 +35,12 @@ public class Laptops extends Produkt implements VariantProdukt {
     public String getBatteryLife() { return batteryLife; }
     public int getRam() { return ram; }
     public String getStorage() { return storage; }
+
+    @Override
+    public String getCategory() {
+        return "laptop";
+    }
+
     public String getColor() { return color; }
 
 

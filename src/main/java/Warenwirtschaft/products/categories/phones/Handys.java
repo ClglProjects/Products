@@ -19,6 +19,11 @@ public class Handys extends Produkt implements VariantProdukt {
     public String getColor() { return color; }
     public String getStorage() { return storage; }
 
+    @Override
+    public String getCategory() {
+        return "handy";
+    }
+
     // `VariantProdukt` Methoden
     @Override
     public String getModel() {

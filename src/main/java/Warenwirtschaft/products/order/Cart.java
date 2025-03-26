@@ -1,7 +1,10 @@
 package Warenwirtschaft.products.order;
 
 import Warenwirtschaft.products.model.VariantProdukt;
+import Warenwirtschaft.products.user.DatabaseConnection;
+import Warenwirtschaft.products.user.User;
 
+import java.sql.*;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -86,5 +89,61 @@ public class Cart {
     public void printCartSummary() {
         System.out.printf("🧾 Artikel im Warenkorb: %d | Gesamtpreis: %.2f€\n",
                 getTotalItems(), getTotalPrice());
+    }
+
+    public void checkout(User user) {
+        if (cartItems.isEmpty()) {
+            System.out.println("🛒 Dein Warenkorb ist leer.");
+            return;
+        }
+
+        double totalPrice = getTotalPrice();
+
+        String insertOrderSQL = "INSERT INTO orders (user_id, total_price) VALUES (?, ?)";
+        String insertItemSQL = "INSERT INTO order_items (order_id, product_name, category, color, storage, quantity, unit_price) VALUES (?, ?, ?, ?, ?, ?, ?)";
+
+        try (Connection conn = DatabaseConnection.getConnection()) {
+            conn.setAutoCommit(false);
+
+            try (PreparedStatement orderStmt = conn.prepareStatement(insertOrderSQL, Statement.RETURN_GENERATED_KEYS)) {
+                orderStmt.setInt(1, user.getId());
+                orderStmt.setDouble(2, totalPrice);
+                orderStmt.executeUpdate();
+
+                ResultSet generatedKeys = orderStmt.getGeneratedKeys();
+                if (generatedKeys.next()) {
+                    int orderId = generatedKeys.getInt(1);
+
+                    try (PreparedStatement itemStmt = conn.prepareStatement(insertItemSQL)) {
+                        for (Map.Entry<VariantProdukt, Integer> entry : cartItems.entrySet()) {
+                            VariantProdukt produkt = entry.getKey();
+                            int menge = entry.getValue();
+
+                            itemStmt.setInt(1, orderId);
+                            itemStmt.setString(2, produkt.getModel());
+                            itemStmt.setString(3, produkt.getCategory());
+                            itemStmt.setString(4, produkt.getColor());
+                            itemStmt.setString(5, produkt.getStorage());
+                            itemStmt.setInt(6, menge);
+                            itemStmt.setDouble(7, produkt.getPrice());
+
+                            itemStmt.addBatch();
+                        }
+                        itemStmt.executeBatch();
+                    }
+
+                    conn.commit();
+                    System.out.println("✅ Bestellung erfolgreich aufgegeben!");
+                    cartItems.clear();
+                } else {
+                    conn.rollback();
+                    System.out.println("❌ Fehler beim Generieren der Bestellnummer.");
+                }
+            }
+
+        } catch (SQLException e) {
+            e.printStackTrace();
+            System.out.println("❌ Fehler beim Checkout.");
+        }
     }
 }

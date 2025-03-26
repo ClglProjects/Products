@@ -1,4 +1,4 @@
-package Warenwirtschaft.products.utils;
+package Warenwirtschaft.products.ui.util;
 
 import java.util.Scanner;
 

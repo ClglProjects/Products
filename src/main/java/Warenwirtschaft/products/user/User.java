@@ -11,7 +11,8 @@ public class User {
     private Cart cart;
     private boolean isAdmin;
 
-    public User(int id, String username, String password, String email, String phone,boolean isAdmin ) {
+    // Konstruktor mit allen Feldern
+    public User(int id, String username, String password, String email, String phone, boolean isAdmin) {
         this.id = id;
         this.username = username;
         this.password = password;
@@ -21,14 +22,23 @@ public class User {
         this.isAdmin = isAdmin;
     }
 
+    // Konstruktor ohne ID, setze Default-Werte für ID und Admin
     public User(String username, String password, String email, String phone) {
-        this(0, username, password, email, phone, false);
-    }
-    public boolean isAdmin() {
-        return isAdmin;
+        this(0, username, password, email, phone, false); // ID auf 0 und Admin auf false setzen
     }
 
+    // Leerer Konstruktor
+    public User() {
+        this.id = 0; // Standardwert für id
+        this.username = ""; // Standardwert für den Benutzernamen
+        this.password = ""; // Standardwert für das Passwort
+        this.email = ""; // Standardwert für die E-Mail
+        this.phone = ""; // Standardwert für die Telefonnummer
+        this.cart = new Cart(); // Standardwert für den Warenkorb
+        this.isAdmin = false; // Standardwert für Admin-Rechte
+    }
 
+    // Getter und Setter
     public int getId() {
         return id;
     }
@@ -69,11 +79,19 @@ public class User {
         this.phone = phone;
     }
 
+    public Cart getCart() {
+        return cart;
+    }
+
     public void setCart(Cart cart) {
         this.cart = cart;
     }
 
-    public Cart getCart() {
-        return cart;
+    public boolean isAdmin() {
+        return isAdmin;
+    }
+
+    public void setAdmin(boolean isAdmin) {
+        this.isAdmin = isAdmin;
     }
 }

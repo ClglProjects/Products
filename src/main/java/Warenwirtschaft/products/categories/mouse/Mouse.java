@@ -31,7 +31,19 @@ public class Mouse extends Produkt {
     // Getter
     public int getDpi() { return dpi; }
     public int getButtons() { return buttons; }
+    @Override
     public String getColor() { return color; }
+
+    @Override
+    public String getStorage() {
+        return "-";
+    }
+
+    @Override
+    public String getCategory() {
+        return "mouse";
+    }
+
     public boolean isRgb() { return rgb; }
     public String getConnectionType() { return connectionType; }
     public String getBatteryLife() { return batteryLife; }

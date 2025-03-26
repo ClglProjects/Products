@@ -3,7 +3,7 @@ package Warenwirtschaft.products.service;
 
 import Warenwirtschaft.products.user.User;
 import Warenwirtschaft.products.model.VariantProdukt;
-import Warenwirtschaft.products.utils.ConsoleUtils;
+import Warenwirtschaft.products.ui.util.ConsoleUtils;
 
 import java.util.List;
 import java.util.Scanner;
