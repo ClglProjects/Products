@@ -1,15 +1,15 @@
-Produkte-Verwaltungssystem - Java (mit Levenshtein-Distanz und Fehlerkorrektur)
-Projektbeschreibung
-Dieses Java-Projekt bietet ein flexibles Verwaltungssystem für verschiedene Produktkategorien, darunter Mäuse, Laptops, Smartphones und mehr. Benutzer können Produkte anzeigen, Bestände aktualisieren und nach Produkten suchen. Die Anwendung nutzt die Levenshtein-Distanz, um Tippfehler in Benutzereingaben zu korrigieren und dem Benutzer ähnliche Produkte vorzuschlagen.
+Produkte-Verwaltungssystem - Java mit Levenshtein-Distanz und Fehlerkorrektur
+Projektbeschreibung:
+Dieses Projekt bietet ein flexibles Verwaltungssystem für verschiedene Produktkategorien, darunter Mäuse, Laptops, Smartphones und mehr. Benutzer können Produkte anzeigen, Bestände aktualisieren und nach Produkten suchen. Die Anwendung nutzt die Levenshtein-Distanz, um Tippfehler in Benutzereingaben zu korrigieren und dem Benutzer ähnliche Produkte vorzuschlagen.
 
-Das System ermöglicht es auch, Admin-Funktionen wie Benutzerverwaltung und Bestellübersicht durchzuführen.
+Ergänzend Hinzugefügt: Zu dem Projekt wurde auch eine Admin Verwaltung hinzugefügt. Der Admin kann die Bestellungen sehen und Produkte hinzufügen oder löschen.
 
 Verwendete Technologien:
 Java (Version 21): Hauptsprache zur Entwicklung der Anwendung.
 
 Levenshtein-Distanz: Zur Fehlerkorrektur bei Benutzereingaben und zum Finden von ähnlichen Produkten.
 
-ArrayList: Speicherung und Verwaltung von Produktinformationen.
+Als erstes mit ArrayList gearbeitet und danach die Datenbank MYSQL hinzugefügt.
 
 Scanner: Interaktive Benutzereingabe im Terminal.
 
@@ -18,11 +18,11 @@ Produktanzeigen: Zeigt alle Produkte einer bestimmten Kategorie (z. B. Mäuse, L
 
 Bestand verwalten: Ermöglicht das Hinzufügen, Löschen und Aktualisieren von Beständen.
 
-Fehlerkorrektur: Mithilfe der Levenshtein-Distanz werden ähnliche Produkte vorgeschlagen, wenn ein Benutzer einen Tippfehler in der Produktauswahl macht.
+*Menü Veränderung vorher: der Benutzer konnte nach einem Modell je nach Produkt suchen und es wird danach angezeigt und fehlerhafte Produkte wurden  mithilfe der Levenshtein-Distanz vorgeschlagen.
 
 Admin-Menü: Administrationsbereich zur Verwaltung von Benutzern, Produkten und Bestellungen.
 
-Kategorien:
+Kategorien: (mithilfe der DB)
 Mäuse: Verschiedene Modelle, die nach Marke und Eigenschaften wie RGB, Verbindungstyp und DPI sortiert sind.
 
 Laptops: Laptops von Marken wie HP, Dell und Apple, sortiert nach Modell und Spezifikationen.
@@ -36,9 +36,12 @@ Produktverwaltung: Hinzufügen, Löschen und Anzeigen von Produkten.
 
 Bestellübersicht: Übersicht über alle Bestellungen.
 
-Projektziele:
+Projektziel:
+Das Ziel des Projektes war es sich wieder in Java einzuarbeiten und  Produkte in  Arraylists zu speichern. Danach wurde Produkte
+mit einer DB ergänzt. Das System wurde so konsipiert, dass es leicht auf neue Produkte und Kategorien erweiterbar ist. 
+
 Flexibilität: Das System ist so konzipiert, dass es leicht auf neue Produkte und Kategorien erweiterbar ist.
 
-Fehlerbehebung: Die Levenshtein-Distanz hilft, Tippfehler bei der Produktauswahl zu korrigieren.
+* Nachträglich verändert. Fehlerbehebung: Die Levenshtein-Distanz hilft, Tippfehler bei der Produktauswahl zu korrigieren.
 
 Benutzerfreundlichkeit: Einfach zu bedienende Konsolenanwendung zur Verwaltung von Produkten und Benutzern.
