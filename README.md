@@ -1,6 +1,6 @@
 Produkte-Verwaltungssystem - Java mit Levenshtein-Distanz und Fehlerkorrektur
 Projektbeschreibung:
-Dieses Projekt bietet ein flexibles Verwaltungssystem für verschiedene Produktkategorien, darunter Mäuse, Laptops, Smartphones und mehr. Benutzer können Produkte anzeigen, Bestände aktualisieren und nach Produkten suchen. Die Anwendung nutzt die Levenshtein-Distanz, um Tippfehler in Benutzereingaben zu korrigieren und dem Benutzer ähnliche Produkte vorzuschlagen.
+Dieses Projekt bietet ein flexibles Verwaltungssystem für verschiedene Produktkategorien, darunter Mäuse, Laptops, Smartphones und mehr. Benutzer können Produkte anzeigen, Bestände aktualisieren und nach Produkten suchen. Die Anwendung nutzt die (Vorher) Levenshtein-Distanz, um Tippfehler in Benutzereingaben zu korrigieren und dem Benutzer ähnliche Produkte vorzuschlagen.
 
 Ergänzend Hinzugefügt: Zu dem Projekt wurde auch eine Admin Verwaltung hinzugefügt. Der Admin kann die Bestellungen sehen und Produkte hinzufügen oder löschen.
 
