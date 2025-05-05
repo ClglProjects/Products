@@ -40,8 +40,6 @@ Projektziel:
 Das Ziel des Projektes war es sich wieder in Java einzuarbeiten und  Produkte in  Arraylists zu speichern. Danach wurde Produkte
 mit einer DB ergänzt. Das System wurde so konsipiert, dass es leicht auf neue Produkte und Kategorien erweiterbar ist. 
 
-Flexibilität: Das System ist so konzipiert, dass es leicht auf neue Produkte und Kategorien erweiterbar ist.
 
-* Nachträglich verändert. Fehlerbehebung: Die Levenshtein-Distanz hilft, Tippfehler bei der Produktauswahl zu korrigieren.
 
-Benutzerfreundlichkeit: Einfach zu bedienende Konsolenanwendung zur Verwaltung von Produkten und Benutzern.
+
